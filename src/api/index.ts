@@ -4,10 +4,7 @@ import type {
   Ingredient, 
   Inventory, 
   Recipe, 
-  RecipeCheckResult, 
-  PurchaseRequest,
-  InventoryWithIngredient,
-  RecipeWithIngredients
+  RecipeCheckResult
 } from '../types';
 import { 
   IngredientCategoryMap, 
@@ -18,7 +15,7 @@ import {
   RecipeTypeReverseMap
 } from '../types';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -49,7 +46,7 @@ api.interceptors.response.use(
 // 获取食材列表
 export async function getIngredients(category?: string): Promise<Ingredient[]> {
   // 如果传入了分类，转换为整数
-  const params = category ? { category: IngredientCategoryMap[category as any] } : {};
+  const params = category ? { category: IngredientCategoryMap[category as keyof typeof IngredientCategoryMap] } : {};
   
   const response = await api.get<Ingredient[]>('/api/ingredients', { params });
   

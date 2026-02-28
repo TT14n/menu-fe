@@ -11,7 +11,6 @@ import {
   getIngredients,
   getIngredientById,
   getRecipeDetail,
-  getPurchasePlan,
   addToCart,
   getCart,
   removeFromCart,
@@ -67,12 +66,8 @@ export function App() {
         ingredient: ingredientsData.find(ing => ing.id === inv.ingredientId)
       }));
       
-      // 处理菜谱数据，确保 ingredients 和 seasonings 始终是数组
-      const processedRecipes = recipesData.map(r => ({
-        ...r,
-        ingredients: r.ingredients || [],
-        seasonings: r.seasonings || []
-      })) as RecipeWithIngredients[];
+      // 处理菜谱数据
+      const processedRecipes = recipesData as RecipeWithIngredients[];
       
       setInventory(inventoryWithIngredient);
       setRecipes(processedRecipes);
@@ -106,16 +101,19 @@ export function App() {
     try {
       const cart = await getCart();
       
-      // 将购物车中的食材添加到购物清单
-      cart.items.forEach(item => {
-        const ingredient = ingredients.find(ing => ing.id === item.ingredientId);
-        if (ingredient) {
-          shoppingMap.set(ingredient.id, {
-            ingredient,
-            recipeNames: [] // 不再显示用于菜谱
-          });
-        }
-      });
+      // 检查购物车是否为空或null
+      if (cart && cart.items && Array.isArray(cart.items)) {
+        // 将购物车中的食材添加到购物清单
+        cart.items.forEach(item => {
+          const ingredient = ingredients.find(ing => ing.id === item.ingredientId);
+          if (ingredient) {
+            shoppingMap.set(ingredient.id, {
+              ingredient,
+              recipeNames: [] // 不再显示用于菜谱
+            });
+          }
+        });
+      }
     } catch (err) {
       console.error('获取购物车失败:', err);
       // 如果后端调用失败，返回空列表
@@ -138,10 +136,7 @@ export function App() {
     }
   }
 
-  // 前端本地计算购物清单逻辑（已废弃，不再使用）
-  function calculateShoppingListLocally(shoppingMap: Map<number, { ingredient: Ingredient; recipeNames: string[] }>) {
-    // 此函数已废弃，系统不再使用 Mock 数据
-  }
+
 
   function getExpiringItems(): InventoryWithIngredient[] {
     return inventory.filter(item => isExpiringSoon(item.expiryDate));
@@ -156,6 +151,12 @@ export function App() {
     try {
       // 先获取当前购物车信息
       const cart = await getCart();
+      
+      // 检查购物车是否存在
+      if (!cart || !cart.id) {
+        showToast('购物车为空，无法完成购买', 'error');
+        return;
+      }
       
       // 调用确认购买接口（后端会自动入库）
       await confirmCartPurchase({
@@ -639,16 +640,25 @@ export function App() {
           {/* Logo 区域 - 增加间距 */}
           <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '12px' : '18px' }}>
             <div class="header-logo" style={{
-              width: '60px',
-              height: '60px',
-              background: 'linear-gradient(135deg, #52c41a 0%, #73d13d 100%)',
+              width: '100px',
+              height: '100px',
+              background: '#fff',
               borderRadius: '15px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 6px 18px rgba(82,196,26,0.2)'
+              boxShadow: '0 6px 18px rgba(82,196,26,0.2)',
+              overflow: 'hidden'
             }}>
-              <ChefHat size={isMobile ? 30 : 33} style={{ color: 'white' }} />
+              <img 
+                src="/favicon.jpg" 
+                alt="购菜管理" 
+                style={{ 
+                  width: '100%', 
+                  height: '100%', 
+                  objectFit: 'cover' 
+                }} 
+              />
             </div>
             <div>
               <h1 class="header-title" style={{
@@ -863,7 +873,6 @@ export function App() {
         )}
         {activeTab === 'history' && (
           <div style={{ 
-            padding: isMobile ? '10px' : '16px', 
             maxWidth: '1400px', 
             margin: '0 auto'
           }}>

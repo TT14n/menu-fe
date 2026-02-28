@@ -404,7 +404,10 @@ export function EditRecipeModal({ isOpen, onClose, onSubmit, recipe, isMobile = 
                   setShowDropdown(true);
                 }}
                 onClick={() => setShowDropdown(true)}
-                onFocus={() => setShowDropdown(true)}
+                onFocus={(e) => {
+                  setShowDropdown(true);
+                  (e.target as HTMLInputElement).style.borderColor = '#1890ff';
+                }}
                 onKeyDown={handleSearchKeyDown}
                 placeholder="点击查看所有食材，或输入搜索..."
                 style={{
@@ -417,7 +420,6 @@ export function EditRecipeModal({ isOpen, onClose, onSubmit, recipe, isMobile = 
                   transition: 'border-color 0.2s',
                   boxSizing: 'border-box'
                 }}
-                onFocus={(e) => (e.target as HTMLInputElement).style.borderColor = '#1890ff'}
                 onBlur={(e) => {
                   setTimeout(() => setShowDropdown(false), 200);
                   (e.target as HTMLInputElement).style.borderColor = '#d9d9d9';

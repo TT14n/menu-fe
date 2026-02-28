@@ -1,6 +1,6 @@
 import { useState } from 'preact/hooks';
 import type { ShoppingItem, InventoryWithIngredient, IngredientCategory } from '../types';
-import { ShoppingCart, AlertTriangle, CheckCircle, Package, Trash2, X, Plus } from 'lucide-preact';
+import { ShoppingCart, AlertTriangle, CheckCircle, Trash2, X } from 'lucide-preact';
 import { calculateRemainingDays } from '../utils/dateUtils';
 import { Popconfirm } from './Popconfirm';
 import '../styles/common.css';
@@ -33,20 +33,10 @@ const placeholderTextColors: Record<IngredientCategory, string> = {
   '调料': 'rgba(114, 46, 209, 0.25)'
 };
 
-// 分类标签颜色
-const categoryColors: Record<IngredientCategory, string> = {
-  '水果': 'bg-orange-50 text-orange-600',
-  '蔬菜': 'bg-green-50 text-green-600',
-  '肉类': 'bg-red-50 text-red-600',
-  '碳水': 'bg-yellow-50 text-yellow-600',
-  '调料': 'bg-purple-50 text-purple-600'
-};
-
 export function ShoppingList({ shoppingItems, expiringItems, onConfirmPurchase, onRemoveFromCart, onBatchRemoveFromCart, isMobile = false, loading = false }: ShoppingListProps) {
   const [isManageMode, setIsManageMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [showHistoryPanel, setShowHistoryPanel] = useState(false);
 
   const toggleManageMode = () => {
     setIsManageMode(!isManageMode);
@@ -95,11 +85,8 @@ export function ShoppingList({ shoppingItems, expiringItems, onConfirmPurchase, 
 
   return (
     <div style={{ 
-      padding: isMobile ? '10px' : '16px', 
       maxWidth: '1400px', 
-      margin: '0 auto',
-      minHeight: '100vh',
-      background: '#fafafa'
+      margin: '0 auto'
     }}>
       {/* 1. 临期提醒区 - 紧凑卡片设计 */}
       {expiringItems.length > 0 && (

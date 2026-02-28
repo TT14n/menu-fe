@@ -15,6 +15,7 @@ interface RecipeAreaProps {
     type: RecipeType;
     description: string;
     imageFile?: File;
+    ingredientIds: number[];
   }) => void;
   onUpdateRecipe: (data: {
     id: number;
@@ -22,6 +23,7 @@ interface RecipeAreaProps {
     type: RecipeType;
     description: string;
     imageFile?: File;
+    ingredientIds: number[];
   }) => void;
   onDeleteRecipe: (id: number) => void;
   onBatchDeleteRecipes?: (ids: number[]) => void;
@@ -41,14 +43,20 @@ const placeholderBgColor = 'rgba(114, 46, 209, 0.04)';
 // 占位符文字色（稍深的紫色）
 const placeholderTextColor = 'rgba(114, 46, 209, 0.25)';
 
-function getRecipeImage(recipeName: string, coverUrl?: string): string {
-  if (coverUrl) return coverUrl;
-  return '';
-}
+// 获取菜谱图片URL
+const getRecipeImage = (_name: string, url?: string) => {
+  if (!url) return '';
+  // 如果是完整URL，直接返回
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  // 否则拼接后端地址
+  return `${import.meta.env.VITE_API_BASE_URL}${url}`;
+};
 
 type RecipeFilterType = 'all' | '快手菜' | '功夫菜';
 
-export function RecipeArea({ recipes, selectedRecipes, onToggleRecipe, onAddRecipe, onUpdateRecipe, onDeleteRecipe, onBatchDeleteRecipes, onFetchRecipe, onAddToShoppingList, isMobile = false }: RecipeAreaProps) {
+export function RecipeArea({ recipes, onAddRecipe, onUpdateRecipe, onDeleteRecipe, onBatchDeleteRecipes, onFetchRecipe, onAddToShoppingList, isMobile = false }: RecipeAreaProps) {
   const [activeFilter, setActiveFilter] = useState<RecipeFilterType>('all');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -63,6 +71,7 @@ export function RecipeArea({ recipes, selectedRecipes, onToggleRecipe, onAddReci
     type: RecipeType;
     description: string;
     imageFile?: File;
+    ingredientIds: number[];
   }) => {
     onAddRecipe(data);
     setIsAddModalOpen(false);
@@ -74,6 +83,7 @@ export function RecipeArea({ recipes, selectedRecipes, onToggleRecipe, onAddReci
     type: RecipeType;
     description: string;
     imageFile?: File;
+    ingredientIds: number[];
   }) => {
     onUpdateRecipe(data);
     setIsEditModalOpen(false);

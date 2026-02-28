@@ -37,14 +37,6 @@ const categoryLabels: Record<IngredientCategory, string> = {
   '调料': '调料'
 };
 
-const categoryColors: Record<IngredientCategory, string> = {
-  '水果': 'bg-orange-50 text-orange-600',
-  '蔬菜': 'bg-green-50 text-green-600',
-  '肉类': 'bg-red-50 text-red-600',
-  '碳水': 'bg-yellow-50 text-yellow-600',
-  '调料': 'bg-purple-50 text-purple-600'
-};
-
 // 占位符背景色（极淡的分类色）
 const placeholderBgColors: Record<IngredientCategory, string> = {
   '水果': 'rgba(255, 140, 0, 0.04)',    // 极淡橙色
@@ -63,17 +55,22 @@ const placeholderTextColors: Record<IngredientCategory, string> = {
   '调料': 'rgba(114, 46, 209, 0.25)'
 };
 
+// 获取食材图片URL
+const getIngredientImage = (_name: string, url?: string) => {
+  if (!url) return '';
+  // 如果是完整URL，直接返回
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  // 否则拼接后端地址
+  return `${import.meta.env.VITE_API_BASE_URL}${url}`;
+};
+
 const storageLabels = {
   '常温': '常温',
   '冷藏': '冷藏',
   '冷冻': '冷冻'
 };
-
-function getIngredientImage(itemName: string, imageUrl?: string): string {
-  if (imageUrl) return imageUrl;
-  // 返回空字符串，使用 CSS 显示占位符
-  return '';
-}
 
 type FilterType = 'all' | '水果' | '蔬菜' | '肉类' | '碳水' | '调料';
 

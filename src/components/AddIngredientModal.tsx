@@ -1,6 +1,6 @@
 import { useState } from 'preact/hooks';
 import type { StorageType, IngredientCategory } from '../types';
-import { X, Upload, Image as ImageIcon } from 'lucide-preact';
+import { X, Upload } from 'lucide-preact';
 
 interface AddIngredientModalProps {
   isOpen: boolean;

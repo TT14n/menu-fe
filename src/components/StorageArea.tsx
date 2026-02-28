@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'preact/hooks';
 import type { InventoryWithIngredient, StorageType, IngredientCategory, Inventory, Ingredient } from '../types';
-import { calculateFreshness, isExpiringSoon, isExpired, calculateRemainingDays } from '../utils/dateUtils';
+import { calculateFreshness, isExpired, calculateRemainingDays } from '../utils/dateUtils';
 import { AddInventoryModal } from './AddInventoryModal';
 import { Popconfirm } from './Popconfirm';
 import { Plus, Edit2, Trash2, CheckCircle2, X, ShoppingCart } from 'lucide-preact';
@@ -36,14 +36,6 @@ const categoryLabels: Record<IngredientCategory, string> = {
   '调料': '调料'
 };
 
-const categoryColors: Record<IngredientCategory, string> = {
-  '水果': 'bg-orange-50 text-orange-600',
-  '蔬菜': 'bg-green-50 text-green-600',
-  '肉类': 'bg-red-50 text-red-600',
-  '碳水': 'bg-yellow-50 text-yellow-600',
-  '调料': 'bg-purple-50 text-purple-600'
-};
-
 // 占位符背景色（极淡的分类色）
 const placeholderBgColors: Record<IngredientCategory, string> = {
   '水果': 'rgba(255, 140, 0, 0.04)',
@@ -62,11 +54,16 @@ const placeholderTextColors: Record<IngredientCategory, string> = {
   '调料': 'rgba(114, 46, 209, 0.25)'
 };
 
-// 食材图片映射
-function getItemImage(itemName: string, imageUrl?: string): string {
-  if (imageUrl) return imageUrl;
-  return '';
-}
+// 获取食材图片URL
+const getItemImage = (_name: string, url?: string) => {
+  if (!url) return '';
+  // 如果是完整URL，直接返回
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  // 否则拼接后端地址
+  return `${import.meta.env.VITE_API_BASE_URL}${url}`;
+};
 
 type FilterType = 'all' | '蔬菜' | '水果' | '肉类' | '碳水' | '调料' | 'expiring';
 
@@ -79,7 +76,6 @@ export function StorageArea({ items, ingredients, onAddInventory, onUpdateInvent
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [expiringItems, setExpiringItems] = useState<Inventory[]>([]);
-  const [loadingExpiring, setLoadingExpiring] = useState(false);
 
   // 组件加载时就获取临期数据，以便显示正确的数量
   useEffect(() => {
@@ -87,15 +83,12 @@ export function StorageArea({ items, ingredients, onAddInventory, onUpdateInvent
   }, []);
 
   async function loadExpiringItems() {
-    setLoadingExpiring(true);
     try {
       const data = await getExpiringInventory(3); // 获取3天内过期的食材
       setExpiringItems(data);
     } catch (err) {
       console.error('获取临期食材失败:', err);
       setExpiringItems([]);
-    } finally {
-      setLoadingExpiring(false);
     }
   }
 
@@ -429,7 +422,6 @@ export function StorageArea({ items, ingredients, onAddInventory, onUpdateInvent
           {filteredItems.map(item => {
             const remainingDays = calculateRemainingDays(item.expiryDate);
             const freshness = calculateFreshness(item.productionDate, item.expiryDate);
-            const expiringSoon = isExpiringSoon(item.expiryDate);
             const expired = isExpired(item.expiryDate);
             
             // 智能色彩状态
