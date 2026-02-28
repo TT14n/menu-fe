@@ -1,0 +1,395 @@
+import { useState } from 'preact/hooks';
+import type { RecipeWithIngredients, RecipeType, Recipe } from '../types';
+import { Clock, Zap, Check, Plus, Trash2, Edit2 } from 'lucide-preact';
+import { AddRecipeModal } from './AddRecipeModal';
+import { EditRecipeModal } from './EditRecipeModal';
+import '../styles/common.css';
+
+interface RecipeAreaProps {
+  recipes: RecipeWithIngredients[];
+  selectedRecipes: Set<number>;
+  onToggleRecipe: (recipeId: number) => void;
+  onAddRecipe: (data: {
+    name: string;
+    type: RecipeType;
+    description: string;
+    imageFile?: File;
+  }) => void;
+  onUpdateRecipe: (data: {
+    id: number;
+    name: string;
+    type: RecipeType;
+    description: string;
+    imageFile?: File;
+  }) => void;
+  onDeleteRecipe: (id: number) => void;
+  onFetchRecipe: (id: number) => Promise<Recipe>;
+  isMobile?: boolean;
+}
+
+const recipeTypeLabels: Record<RecipeType, string> = {
+  '快手菜': '快手菜',
+  '功夫菜': '功夫菜'
+};
+
+// 占位符背景色（极淡的紫色）
+const placeholderBgColor = 'rgba(114, 46, 209, 0.04)';
+
+// 占位符文字色（稍深的紫色）
+const placeholderTextColor = 'rgba(114, 46, 209, 0.25)';
+
+function getRecipeImage(recipeName: string, coverUrl?: string): string {
+  if (coverUrl) return coverUrl;
+  return '';
+}
+
+type RecipeFilterType = 'all' | '快手菜' | '功夫菜' | 'selected';
+
+export function RecipeArea({ recipes, selectedRecipes, onToggleRecipe, onAddRecipe, onUpdateRecipe, onDeleteRecipe, onFetchRecipe, isMobile = false }: RecipeAreaProps) {
+  const [activeFilter, setActiveFilter] = useState<RecipeFilterType>('all');
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleAddRecipe = (data: {
+    name: string;
+    type: RecipeType;
+    description: string;
+    imageFile?: File;
+  }) => {
+    onAddRecipe(data);
+    setIsAddModalOpen(false);
+  };
+
+  const handleUpdateRecipe = (data: {
+    id: number;
+    name: string;
+    type: RecipeType;
+    description: string;
+    imageFile?: File;
+  }) => {
+    onUpdateRecipe(data);
+    setIsEditModalOpen(false);
+    setEditingRecipe(null);
+  };
+
+  const handleOpenEdit = async (recipe: RecipeWithIngredients, e: Event) => {
+    e.stopPropagation();
+    setLoading(true);
+    try {
+      // 从后端获取最新的菜谱信息
+      const latestRecipe = await onFetchRecipe(recipe.id);
+      setEditingRecipe(latestRecipe);
+      setIsEditModalOpen(true);
+    } catch (err) {
+      console.error('获取菜谱信息失败:', err);
+      alert('获取菜谱信息失败，请重试');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = (recipeId: number, e: Event) => {
+    e.stopPropagation();
+    if (confirm('确定要删除这个菜谱吗？')) {
+      onDeleteRecipe(recipeId);
+    }
+  };
+
+  const filteredRecipes = recipes.filter(recipe => {
+    if (activeFilter === 'all') return true;
+    if (activeFilter === 'selected') return selectedRecipes.has(recipe.id);
+    return recipe.type === activeFilter;
+  });
+
+  const getFilterCount = (filterId: RecipeFilterType) => {
+    if (filterId === 'all') return recipes.length;
+    if (filterId === 'selected') return selectedRecipes.size;
+    return recipes.filter(recipe => recipe.type === filterId).length;
+  };
+
+  const filters = [
+    { id: 'all' as RecipeFilterType, label: '全部', emoji: '🍽️' },
+    { id: 'selected' as RecipeFilterType, label: '已选', emoji: '✅' },
+    { id: '快手菜' as RecipeFilterType, label: '快手菜', emoji: '⚡' },
+    { id: '功夫菜' as RecipeFilterType, label: '功夫菜', emoji: '🍲' },
+  ];
+
+  return (
+    <div style={{ minHeight: '100vh', background: '#fafafa' }}>
+      {/* 新增菜谱按钮 - 固定在右下角，统一 64px */}
+      <button
+        onClick={() => setIsAddModalOpen(true)}
+        style={{
+          position: 'fixed',
+          bottom: isMobile ? '24px' : '40px',
+          right: isMobile ? '24px' : '40px',
+          width: '64px',
+          height: '64px',
+          borderRadius: '50%',
+          background: 'linear-gradient(135deg, #722ed1 0%, #9254de 100%)',
+          border: 'none',
+          boxShadow: '0 4px 16px rgba(114,46,209,0.4)',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 100,
+          transition: 'all 0.3s ease'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'scale(1.1)';
+          e.currentTarget.style.boxShadow = '0 6px 24px rgba(114,46,209,0.5)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'scale(1)';
+          e.currentTarget.style.boxShadow = '0 4px 16px rgba(114,46,209,0.4)';
+        }}
+      >
+        <Plus size={isMobile ? 32 : 40} style={{ color: '#fff' }} strokeWidth={3} />
+      </button>
+
+      {/* 添加菜谱弹窗 */}
+      <AddRecipeModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onSubmit={handleAddRecipe}
+        isMobile={isMobile}
+      />
+
+      {/* 修改菜谱弹窗 */}
+      <EditRecipeModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setEditingRecipe(null);
+        }}
+        onSubmit={handleUpdateRecipe}
+        recipe={editingRecipe}
+        isMobile={isMobile}
+      />
+
+      {/* 筛选器 - 统一样式 */}
+      <div class="filter-container">
+        {filters.map(filter => {
+          const isActive = activeFilter === filter.id;
+          const count = getFilterCount(filter.id);
+          return (
+            <button
+              key={filter.id}
+              onClick={() => setActiveFilter(filter.id)}
+              class={`filter-button theme-purple ${isActive ? 'active' : 'inactive'}`}
+            >
+              <span class="filter-emoji">{filter.emoji}</span>
+              <span>{filter.label}</span>
+              <span class={`filter-badge ${isActive ? 'active' : 'inactive'}`}>
+                {count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* 菜谱网格 - 统一样式 */}
+      {filteredRecipes.length === 0 ? (
+        <div class="empty-state">
+          <div class="empty-icon-container">
+            <span class="empty-icon">👨‍🍳</span>
+          </div>
+          <p class="empty-title">暂无菜谱</p>
+          <p class="empty-subtitle">点击右下角按钮添加菜谱</p>
+        </div>
+      ) : (
+        <div class="card-grid">
+          {filteredRecipes.map(recipe => {
+            const isSelected = selectedRecipes.has(recipe.id);
+            return (
+              <div 
+                key={recipe.id}
+                class={`item-card ${isSelected ? 'selected' : ''}`}
+              >
+                {/* 图片容器 */}
+                <div 
+                  class="card-image-container"
+                  style={{
+                    background: recipe.coverUrl ? '#fafafa' : placeholderBgColor,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    position: 'relative'
+                  }}
+                  onClick={() => onToggleRecipe(recipe.id)}
+                >
+                  {recipe.coverUrl ? (
+                    <img 
+                      src={getRecipeImage(recipe.name, recipe.coverUrl)} 
+                      alt={recipe.name}
+                      class="card-image"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div style={{
+                      fontSize: isMobile ? '72px' : '96px',
+                      color: placeholderTextColor,
+                      fontWeight: '500',
+                      letterSpacing: '0.02em'
+                    }}>
+                      {recipe.name.charAt(0)}
+                    </div>
+                  )}
+                  
+                  {/* 左下角类型标签 - 无论有无图片都显示，z-index 提高 */}
+                  <span 
+                    class="card-tag bottom-left"
+                    style={{
+                      zIndex: 10,
+                      background: recipe.type === '快手菜' ? 'rgba(250,173,20,0.9)' : 'rgba(24,144,255,0.9)',
+                      color: 'white',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '3px',
+                      backdropFilter: 'blur(4px)'
+                    }}
+                  >
+                    {recipe.type === '快手菜' ? <Zap size={16.5} /> : <Clock size={16.5} />}
+                    {recipeTypeLabels[recipe.type]}
+                  </span>
+
+                  {/* 右上角选中标识 - z-index 提高 */}
+                  {isSelected && (
+                    <div style={{
+                      position: 'absolute',
+                      top: '9px',
+                      right: '9px',
+                      background: '#722ed1',
+                      color: 'white',
+                      padding: '6px',
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      boxShadow: '0 3px 12px rgba(114,46,209,0.4)',
+                      zIndex: 10
+                    }}>
+                      <Check size={18} strokeWidth={3} />
+                    </div>
+                  )}
+                </div>
+
+                {/* 内容区域 */}
+                <div class="card-content">
+                  <h4 class="card-title">{recipe.name}</h4>
+
+                  {/* 食材预览 */}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '12px' }}>
+                    {recipe.ingredients.slice(0, 2).map((ing, i) => (
+                      <span key={i} style={{
+                        padding: '3px 9px',
+                        background: '#f9f0ff',
+                        color: '#722ed1',
+                        borderRadius: '6px',
+                        fontSize: '16.5px',
+                        fontWeight: '600',
+                        border: '1.5px solid #efdbff'
+                      }}>
+                        {ing.name}
+                      </span>
+                    ))}
+                    {recipe.ingredients.length > 2 && (
+                      <span style={{
+                        padding: '3px 9px',
+                        background: '#f5f5f5',
+                        color: '#595959',
+                        borderRadius: '6px',
+                        fontSize: '16.5px',
+                        fontWeight: '700'
+                      }}>
+                        +{recipe.ingredients.length - 2}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* 操作按钮 */}
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button
+                      onClick={(e) => handleOpenEdit(recipe, e)}
+                      disabled={loading}
+                      style={{
+                        flex: 1,
+                        padding: '8px',
+                        background: loading ? '#f5f5f5' : '#e6f7ff',
+                        border: '1px solid #91d5ff',
+                        borderRadius: '8px',
+                        color: loading ? '#d9d9d9' : '#1890ff',
+                        fontSize: '13px',
+                        fontWeight: '600',
+                        cursor: loading ? 'not-allowed' : 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '4px',
+                        transition: 'all 0.2s'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!loading) {
+                          e.currentTarget.style.background = '#1890ff';
+                          e.currentTarget.style.color = '#fff';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!loading) {
+                          e.currentTarget.style.background = '#e6f7ff';
+                          e.currentTarget.style.color = '#1890ff';
+                        }
+                      }}
+                    >
+                      <Edit2 size={14} />
+                      {loading ? '加载中...' : '修改'}
+                    </button>
+                    <button
+                      onClick={(e) => handleDelete(recipe.id, e)}
+                      disabled={loading}
+                      style={{
+                        flex: 1,
+                        padding: '8px',
+                        background: loading ? '#f5f5f5' : '#fff1f0',
+                        border: '1px solid #ffccc7',
+                        borderRadius: '8px',
+                        color: loading ? '#d9d9d9' : '#f5222d',
+                        fontSize: '13px',
+                        fontWeight: '600',
+                        cursor: loading ? 'not-allowed' : 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '4px',
+                        transition: 'all 0.2s'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!loading) {
+                          e.currentTarget.style.background = '#f5222d';
+                          e.currentTarget.style.color = '#fff';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!loading) {
+                          e.currentTarget.style.background = '#fff1f0';
+                          e.currentTarget.style.color = '#f5222d';
+                        }
+                      }}
+                    >
+                      <Trash2 size={14} />
+                      删除
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}

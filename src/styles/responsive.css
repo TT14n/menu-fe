@@ -1,0 +1,215 @@
+/* 全局响应式样式 */
+
+/* 根字体大小 - 基准 24px (16px * 1.5) */
+:root {
+  font-size: 24px;
+}
+
+/* 食材网格容器 */
+.ingredients-grid {
+  display: grid;
+  padding: 24px;
+  /* 关键：auto-fill 会根据屏幕宽度自动决定一行放几个 */
+  /* minmax(225px, 1fr) 保证卡片最小 225px (150px * 1.5)，手机端会自动变成 1-2 列 */
+  grid-template-columns: repeat(auto-fill, minmax(225px, 1fr));
+  gap: 24px;
+  max-width: 2100px;
+  margin: 0 auto;
+}
+
+/* 菜谱网格容器 */
+.recipes-grid {
+  display: grid;
+  padding: 24px;
+  grid-template-columns: repeat(auto-fill, minmax(225px, 1fr));
+  gap: 24px;
+  max-width: 2100px;
+  margin: 0 auto;
+}
+
+/* 筛选器容器 - 支持横向滚动 */
+.filters-container {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 24px;
+  margin-bottom: 12px;
+  /* 隐藏滚动条但保持功能 */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.filters-container::-webkit-scrollbar {
+  display: none;
+}
+
+/* 确保按钮不换行 */
+.filter-button {
+  white-space: nowrap;
+  flex-shrink: 0;
+  /* 手机端点击区域至少 66px (44px * 1.5) */
+  min-height: 66px;
+  padding: 12px 24px;
+}
+
+/* 平板端适配 (768px - 1024px) */
+@media (max-width: 1024px) {
+  .ingredients-grid,
+  .recipes-grid {
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 21px;
+  }
+}
+
+/* 手机端适配 (< 768px) */
+@media (max-width: 768px) {
+  /* 根字体稍微调小 */
+  :root {
+    font-size: 22px;
+  }
+
+  .ingredients-grid,
+  .recipes-grid {
+    /* 手机端固定两列，卡片更大更易点击 */
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    padding: 15px;
+  }
+  
+  /* 筛选器手机端优化 */
+  .filters-container {
+    gap: 9px;
+    padding: 18px 15px;
+    margin-bottom: 6px;
+  }
+
+  .filter-button {
+    font-size: 18px;
+    padding: 12px 18px;
+  }
+
+  /* Header 适配 */
+  .header-container {
+    padding: 18px 24px !important;
+  }
+
+  .header-title {
+    font-size: 1.65rem !important;
+  }
+
+  .header-subtitle {
+    font-size: 16.5px !important;
+  }
+
+  .header-logo {
+    width: 54px !important;
+    height: 54px !important;
+  }
+
+  .header-controls {
+    gap: 12px !important;
+  }
+
+  .header-control-label {
+    padding: 9px 15px !important;
+    font-size: 16.5px !important;
+  }
+
+  /* Tab 导航适配 */
+  .tabs-container {
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .tabs-container::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tab-button {
+    font-size: 19.5px !important;
+    padding: 15px 24px !important;
+    min-width: auto;
+  }
+
+  /* 卡片内容适配 */
+  .card-title {
+    font-size: 19.5px !important;
+  }
+
+  .card-subtitle {
+    font-size: 16.5px !important;
+  }
+
+  /* 进度条加粗 */
+  .progress-bar {
+    height: 7.5px !important;
+  }
+
+  /* 阴影减淡 */
+  .card-shadow {
+    box-shadow: 0 1.5px 6px rgba(0,0,0,0.08) !important;
+  }
+
+  .card-shadow:hover {
+    box-shadow: 0 3px 12px rgba(0,0,0,0.12) !important;
+  }
+
+  /* 购物清单适配 */
+  .shopping-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* 临期预警适配 */
+  .expiring-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+/* 小屏手机适配 (< 375px) */
+@media (max-width: 375px) {
+  .ingredients-grid,
+  .recipes-grid {
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .header-container {
+    padding: 15px 18px !important;
+  }
+
+  .filter-button {
+    font-size: 16.5px;
+    padding: 9px 15px;
+  }
+}
+
+/* 大屏优化 (> 1400px) */
+@media (min-width: 1400px) {
+  .ingredients-grid,
+  .recipes-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 27px;
+  }
+
+  /* 增加内容区域的内边距 */
+  .main-content {
+    padding: 30px 36px;
+  }
+}
+
+/* 触摸设备优化 */
+@media (hover: none) and (pointer: coarse) {
+  /* 增加所有可点击元素的点击区域 */
+  button,
+  .clickable {
+    min-height: 66px;
+    min-width: 66px;
+  }
+
+  /* 移除悬停效果，因为触摸设备没有悬停 */
+  .card-hover-effect:hover {
+    transform: none !important;
+  }
+}
+
